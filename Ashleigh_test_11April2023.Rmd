@@ -1,0 +1,24 @@
+---
+title: "Ashleigh_test"
+author: "Ashleigh Pilkerton"
+date: "2023-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+```
+
+### Create test plot with iris dataset
+```{r}
+data("iris")
+
+ggplot(iris, aes(x = Sepal.Width, y = Sepal.Length, color = Species)) +
+  geom_point()
+```
+
