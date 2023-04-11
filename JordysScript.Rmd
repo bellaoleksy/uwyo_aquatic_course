@@ -1,0 +1,15 @@
+---
+title: "Jordy's Markdown"
+author: "Jordan Von Eggers"
+date: "2023-04-11"
+output: html_document
+---
+
+```{r}
+x=seq(1,20,1)
+y=seq(40,60,1)
+
+plot(x,y)
+```
+
+
