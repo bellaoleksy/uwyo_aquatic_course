@@ -1,2 +1,2 @@
-# uwyo_aquatic_course
-Group project for ECOL5020
+# University of Wyoming Aquatic Course
+- Group project for ECOL5020
