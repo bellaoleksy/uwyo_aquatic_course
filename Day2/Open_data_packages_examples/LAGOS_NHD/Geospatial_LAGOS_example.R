@@ -8,7 +8,7 @@
 library(sf)
 library(tidyverse)
 
-#??sf
+??sf
 
 str(dt1)
 #EPSG=4326 -> WGS 84 -- WGS84 - World Geodetic System 1984, used in GPS
@@ -32,6 +32,10 @@ ggplot()+
 
 ##Using LAGOS package
 library(LAGOSUS)
+
+# only the locus and depth modules are currently public:
+lagosus_get(dest_folder = lagosus_path())
+
 lg <- lagosus_load(modules = c("locus"))
 
 lg_df <- coordinatize(lg$locus$lake_information) #Turns into a df
