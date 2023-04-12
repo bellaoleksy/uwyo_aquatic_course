@@ -5,11 +5,149 @@ date: "2023-04-11"
 output: html_document
 ---
 
+Top part of figure
 ```{r}
-x=seq(1,20,1)
-y=seq(40,60,1)
+domtax<-read.csv("Top_phyla_and_families_14Oct2022.csv",header=T,row.names=1)
+lake_drives<-unique(domtax$lake_drive)
+require(pivottabler)
+unique_tax<-c("Bacteria@Proteobacteria@Undifferentiated_Proteobacteria",
+          "Bacteria@Chloroflexi@Anaerolineae@Anaerolineales@Anaerolineaceae"   ,
+                            "Archaea@Euryarchaeota", 
+               "Archaea@Miscellaneous_Crenarchaeotic_Group",  
+                        "Bacteria@Planctomycetes@Phycisphaerae" )
 
-plot(x,y)
+zone_colors<- c(rep('#018571',1),rep('#C4AD79',2),rep('#a6611a',2))
+i=1
+l=1
+pdf("Figures/Phyla_family_lines_26cm_topcolumn_14Oct2022.pdf", width=13, height=4)
+par(mfrow=c(1,13), mar=c(6,6,1,0))
+plot(0:26,0:26, bty="n", frame.plot = FALSE, xaxt="n", yaxt="n",ylab = "Depth (cm)", xlab="",ylim=c(26,0), las=1, cex.lab=1.6, pch=19, col="white")
+axis(side=2, at= seq(0, 26, by=2), cex.axis=1.6,labels= seq(0, 26, by=2), las=1)
+par(mar=c(6,0.5,1,1), xpd=TRUE)
+for(i in 1:(length(unique_tax))){
+  temp<-domtax[domtax$tax==unique_tax[i],]
+  temp<-temp[order(temp$bin_depth,decreasing=T),]
+  pt <- PivotTable$new()
+    pt$addData(temp)
+    pt$addRowDataGroups("bin_depth") 
+    pt$defineCalculation(calculationName="Abundance", summariseExpression="mean(Abundance,na.rm=T)")
+    pt$renderPivot()
+    meanabund <- pt$asDataFrame()
+    meanabund$bin_depth<-rownames(meanabund)
+    meanabund<-meanabund[-which(meanabund$bin_depth=="Total"),]
+    meanabund$bin_depth<-as.numeric(meanabund$bin_depth)
+    meanabund<-meanabund[order(meanabund$bin_depth,decreasing = T),]
+    plot(temp$Abundance,temp$bin_depth,col="white",ylim=c(26,0),xlim=c(0,max(meanabund$Abundance)*1.8),bty="n",ylab="",xlab="",yaxt="n",cex.axis=1.6)
+
+    for(l in 1:length(lake_drives)){
+  temp2<-temp[temp$lake_drive==lake_drives[l],]  
+  temp2<-temp2[order(temp2$bin_depth,decreasing = F),]
+  lines(temp2$Abundance,temp2$bin_depth, col="gray")}
+    lines(meanabund$Abundance,meanabund$bin_depth, col=zone_colors[i],lwd=4)
+}
+
+
+seq<-seq(2,14,2)
+lab<-c("Species\nrichness","Shannon\ndiversity","Simpson\ndiversity","d13C", "%C","%N","C:N")
+lines<-c(rep(4.5,3), rep(3.5,4))
+sed_col<-c(rep("#607B8B",3), rep("#616161",4))
+i=1
+
+par(mar=c(6,0.5,1,1), xpd=TRUE)
+
+  sum_temp<-summary[,c(1,seq[i],seq[i]+1)]
+  sum_temp$sdp<-sum_temp[,2]+sum_temp[,3]
+  sum_temp$sdm<-sum_temp[,2]-sum_temp[,3]
+  plot(sum_temp[,2],sum_temp$bin_depth,ylim=c(26,0),xlim=c(min(sum_temp$sdm),max(sum_temp$sdp)),type="l",bty="n", yaxt="n", ylab="",col="white",lwd=2, xlab="", cex.axis=1.6)
+    mtext(lab[i],side=1,line=lines[i], cex=1.1)
+polygon(x = c(sum_temp$sdp,rev(sum_temp$sdm)),  # X-Coordinates of polygon 
+        y = c(sum_temp$bin_depth, rev(sum_temp$bin_depth)),    # Y-Coordinates of polygon
+        col = paste(sed_col[i],"50",sep=""), 
+        border=paste(sed_col[i],"50",sep="")) 
+lines(sum_temp[,2],sum_temp$bin_depth, col=sed_col[i],lwd=3)
+  dev.off()
+  
+pdf("Figures/Phyla_family_lines_26cm_topcolumn_2nd_14Oct2022.pdf", width=13, height=4)  
+seq<-seq(2,14,2)
+lab<-c("Species\nrichness","Shannon\ndiversity","Simpson\ndiversity","d13C", "%C","%N","C:N")
+lines<-c(rep(4.5,3), rep(3.5,4))
+sed_col<-c(rep("#607B8B",3), rep("#616161",4))
+i=2
+
+
+par(mfrow=c(1,13), mar=c(6,6,1,0))
+plot(0:26,0:26, bty="n", frame.plot = FALSE, xaxt="n", yaxt="n",ylab = "Depth (cm)", xlab="",ylim=c(26,0), las=1, cex.lab=1.6, pch=19, col="white")
+axis(side=2, at= seq(0, 26, by=2), cex.axis=1.6,labels= seq(0, 26, by=2), las=1)
+par(mar=c(6,0.5,1,1), xpd=TRUE)
+
+for(i in 2:length(seq)){
+  sum_temp<-summary[,c(1,seq[i],seq[i]+1)]
+  sum_temp$sdp<-sum_temp[,2]+sum_temp[,3]
+  sum_temp$sdm<-sum_temp[,2]-sum_temp[,3]
+  plot(sum_temp[,2],sum_temp$bin_depth,ylim=c(26,0),xlim=c(min(sum_temp$sdm),max(sum_temp$sdp)),type="l",bty="n", yaxt="n", ylab="",col="white",lwd=2, xlab="", cex.axis=1.6)
+    mtext(lab[i],side=1,line=lines[i], cex=1.1)
+polygon(x = c(sum_temp$sdp,rev(sum_temp$sdm)),  # X-Coordinates of polygon 
+        y = c(sum_temp$bin_depth, rev(sum_temp$bin_depth)),    # Y-Coordinates of polygon
+        col = paste(sed_col[i],"50",sep=""), 
+        border=paste(sed_col[i],"50",sep="")) 
+lines(sum_temp[,2],sum_temp$bin_depth, col=sed_col[i],lwd=3)
+}
+ dev.off()
+   
 ```
 
+bottom of plot
+```{r}
+zone_colors<- c(rep('#018571',5),rep('#C4AD79',3),rep('#a6611a',3))
+unique_tax <-c(     "Bacteria@Cyanobacteria", 
+                    "Bacteria@Bacteroidetes", 
+               "Bacteria@Verrucomicrobia" ,
+               "Bacteria@Planctomycetes@Planctomycetacia@Planctomycetales@Planctomycetaceae",
+               "Bacteria@Chloroflexi@KD4-96@Unassigned@Unassigned", 
+               "Bacteria@Proteobacteria@Deltaproteobacteria@Syntrophobacterales@Syntrophaceae" ,
+              "Bacteria@Undifferentiated_Planctomycetes",
+               "Bacteria@Chloroflexi@Unassigned@Unassigned@Unassigned",
+                "Bacteria@Proteobacteria@Deltaproteobacteria@Sva0485@Unassigned",
+               "Bacteria@Undifferentiated_Chloroflexi"     ,
+               "Bacteria@Chloroflexi@Dehalococcoidia@MSBL5@Unassigned")
+
+table(unique_tax%in%domtax$tax)
+
+pdf("Figures/Phyla_family_lines_26cm_bottomcolumn_14Oct2022.pdf", width=13, height=4)
+par(mfrow=c(1,13), mar=c(5.5,6,1.5,0))
+plot( 0:26,0:26, bty="n", frame.plot = FALSE, xaxt="n", yaxt="n",ylab = "Depth (cm)", xlab="",ylim=c(26,0), las=1, cex.lab=1.6, pch=19, col="white")
+axis(side=2, at= seq(0, 26, by=2), cex.axis=1.6,labels= seq(0, 26, by=2), las=1)
+par(mar=c(5.5,0.5,1.5,1), xpd=TRUE)
+for(i in 1:(length(unique_tax))){
+  temp<-domtax[domtax$tax==unique_tax[i],]
+  temp<-temp[order(temp$bin_depth,decreasing=T),]
+  pt <- PivotTable$new()
+    pt$addData(temp)
+    pt$addRowDataGroups("bin_depth") 
+    pt$defineCalculation(calculationName="Abundance", summariseExpression="mean(Abundance,na.rm=T)")
+    pt$renderPivot()
+    meanabund <- pt$asDataFrame()
+    meanabund$bin_depth<-rownames(meanabund)
+    meanabund<-meanabund[-which(meanabund$bin_depth=="Total"),]
+    meanabund$bin_depth<-as.numeric(meanabund$bin_depth)
+    meanabund<-meanabund[order(meanabund$bin_depth,decreasing = T),]
+    plot(temp$Abundance,temp$bin_depth,col="white",ylim=c(26,0),xlim=c(0,max(meanabund$Abundance)*1.8),bty="n",ylab="",xlab="",yaxt="n",cex.axis=1.6)
+
+    for(l in 1:length(lake_drives)){
+  temp2<-temp[temp$lake_drive==lake_drives[l],]  
+  temp2<-temp2[order(temp2$bin_depth,decreasing = F),]
+  lines(temp2$Abundance,temp2$bin_depth, col="gray")}
+  if(meanabund$Abundance>0.05){points(((max(meanabund$Abundance)*1.8)/2),-1, pch=8, lwd=1.5,cex=2)}
+    lines(meanabund$Abundance,meanabund$bin_depth, col=zone_colors[i],lwd=4)
+}
+
+par(mar=c(5.5,2,1.5,1))
+ plot(clust, xvar=as.numeric(clust[["labels"]]),ylim=c(0,3.2), xaxt="n",hang=-1, cex=1.6, cex.lab=1.6, cex.main=1.8, horiz=TRUE, x.rev=TRUE) 
+  mtext("Distance",side=1,line=3, cex=1.1)
+  mtext("CONISS", side=3, line=0, cex=1.1)
+  axis(side=1,at=c(0,1,2,3),labels=c(0,1,2,3), cex.axis=1.6)
+dev.off()
+
+```
+```
 
