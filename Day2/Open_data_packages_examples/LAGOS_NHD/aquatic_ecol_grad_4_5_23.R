@@ -150,7 +150,7 @@ head(fish.data)
 fish_field<- 
   fish[[3]] %>%            
   as_tibble()
-head(fish.field)
+head(fish_field)
 
 fish_pass<-
   fish[[5]] %>%            
@@ -204,7 +204,7 @@ fish_bulk<-fish.data %>%
   select(eventID,bulkFishCount) %>%
   group_by(eventID) %>%
   summarize(bulkcount=sum(bulkFishCount))
-write.csv(Pred_ept_R2,'predator_density.csv')
+#write.csv(Pred_ept_R2,'predator_density.csv')
 
 
 ###4 is variables csv####
@@ -232,5 +232,6 @@ P<-ggplot(data = NEON_aquatic_ecol_grad_db, aes(x = log(chlorophylla_g_m2), y= l
   #geom_point(aes(color=Site), position = position_jitterdodge(), shape = 19,size = 1, alpha = .3)+
   geom_point(size=1.52, shape = 21,aes(fill=Site),colour="black")+
   #geom_point(data = den.tab, size = 4)+
-  geom_smooth(method = 'lm',formula = y ~ x,size = 1,alpha = 0.3,se=TRUE)+
-  P+facet_wrap(~Domain)###play around with facet wrap to explore data patterns
+  geom_smooth(method = 'lm',formula = y ~ x,size = 1,alpha = 0.3,se=TRUE)
+ 
+P+facet_wrap(~Domain)###play around with facet wrap to explore data patterns
