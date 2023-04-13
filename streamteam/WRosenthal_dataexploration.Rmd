@@ -1,0 +1,142 @@
+---
+title: "Will Rosenthal data exploration"
+output: html_document
+---
+
+Read in data
+
+```{r, echo=FALSE}
+data <- read.csv("./../../data/NEON_aquatic_ecol_grad_db.csv")
+site_meta <- read.csv("./../../data/NEON_Field_Site_Metadata_20230309.csv")
+
+library(tidyverse)
+library(ggplot2)
+library(sf)
+library(ggmap)
+library(lme4)
+library(glme)
+library(glmmTMB)
+library(lsmeans)
+library(gridExtra)
+```
+
+
+Let's look at variation in invert diversity over space & other things
+
+```{r}
+
+ggplot(data=data, mapping=aes(x=INV_DEN,y=INV_RICHNESS)) + geom_point() + facet_wrap(~Domain)
+
+```
+That's not interesting
+
+```{r}
+ggplot(data=data, mapping=aes(x=decimalLatitude,y=INV_RICHNESS)) + geom_point(aes(col=Site)) 
+
+```
+```{r}
+ggplot(data=data, mapping=aes(x=Domain,y=INV_RICHNESS,group=Domain)) + geom_violin() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r}
+data$decimalLongitude <- site_meta$field_longitude[match(data$Site,site_meta$field_site_id)]
+
+data_sf <- data %>% group_by(Site) %>% dplyr::summarise(mean_inv_rich = mean(INV_RICHNESS,na.rm=T), lat = mean(decimalLatitude), long = mean(decimalLongitude), mean_ept_prop = mean(Percent_EPT/100,na.rm=T), domain=unique(Domain), mean_ept_dens = mean(eptdensity, na.rm=T))
+
+data_sf$elevation <- site_meta$field_mean_elevation_m[match(data_sf$Site,site_meta$field_site_id)]
+
+data_sf <- st_as_sf(data_sf,coords = c("long", "lat"), crs = 4326)
+
+```
+
+```{r}
+map <- get_stamenmap(bbox=c(-149.543,18.11352,-66.79868,68.96975),zoom=4,source="stamen",maptype="terrain-background")
+m <- ggmap(map)
+```
+
+```{r}
+m2 <- m +geom_sf(data=data_sf, aes(col=mean_inv_rich), size=7,alpha=0.9,inherit.aes = FALSE) +
+  scale_color_continuous(type="viridis")
+m2
+```
+
+
+
+```{r}
+m3 <- m + geom_sf(data=data_sf, aes(col=mean_ept_prop), size=7,alpha=0.9,inherit.aes = FALSE) +
+  scale_color_continuous(type="viridis")
+m3
+
+
+```
+```{r}
+p1 <- ggplot(data_sf, mapping=aes(x=mean_inv_rich, y = mean_ept_prop)) + geom_point(size=3) +
+  xlab("Mean invertebrate richness") + ylab("Mean prop. EPT")
+
+p2 <- ggplot(data_sf, mapping=aes(x=mean_inv_rich, y = mean_ept_dens)) + geom_point(size=3) +
+  xlab("Mean invertebrate richness") + ylab("Mean EPT density")
+
+grid.arrange(p2,p1)
+```
+
+
+Looks like a relationship! Let's test it formally
+
+```{r}
+data$Percent_EPT <- data$Percent_EPT/100
+model1 <- glmmTMB(Percent_EPT ~ INV_RICHNESS + (1|Site) + (1|Site:collectDate), data=data,family=beta_family())
+summary(model1)
+```
+
+Significant! Yes!
+
+Total richness and elevation
+```{r}
+ggplot(data_sf, mapping=aes(x=elevation,y=mean_inv_rich)) + geom_point(size=3)
+```
+
+
+
+Predator richness ~ elevation + elevation*non-pred richness
+
+```{r}
+
+m2 <- lmer(scale(pred_richness) ~ scale(elevation_m)+ (1|Site) + (1|Site:collectDate), data=data )
+summary(m2)
+```
+
+```{r}
+m3 <- lmer(INV_RICHNESS ~ scale(elevation_m)+ (1|Site) + (1|Site:collectDate), data=data )
+summary(m3)
+```
+
+```{r}
+m4 <- lmer(pred_richness ~ scale(elevation_m)+ scale(elevation_m)*INV_RICHNESS + (1|Site) + (1|Site:collectDate), data=data )
+summary(m4)
+```
+
+
+
+
+```{r}
+data$watershed_size <- site_meta$field_watershed_size_km2[match(data$Site,site_meta$field_site_id)]
+
+ggplot(data, mapping=aes(x=watershed_size, y=INV_RICHNESS)) + geom_point()
+```
+
+```{r}
+p1 <- ggplot(data, mapping=aes(x=DOC,y=Percent_EPT)) + geom_point()
+p2 <- ggplot(data, mapping=aes(x=TN,y=Percent_EPT)) + geom_point()
+p3 <- ggplot(data, mapping=aes(x=TP,y=Percent_EPT)) + geom_point()
+p4 <- ggplot(data, mapping=aes(x=TDP,y=Percent_EPT)) + geom_point()
+
+grid.arrange(p1,p2,p3,p4)
+
+```
+
+
+
+
+
+
