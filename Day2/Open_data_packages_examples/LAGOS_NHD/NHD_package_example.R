@@ -2,7 +2,7 @@
 ### Code created by Carolina Barbosa based on "Plotting with nhdplusTools' examples from David L Blodgett - April 2023
 
 #dataset: https://www.usgs.gov/national-hydrography/national-hydrography-dataset
-
+install.packages("nhdplusTools")
 library(nhdplusTools)
 ??nhdplusTools
 
