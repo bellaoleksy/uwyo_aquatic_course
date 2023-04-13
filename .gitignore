@@ -27,3 +27,5 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 Practice_Markdown_Document.tex
+NEON_aquatic_ecol_grad_db.csv
+JVcommentsLagos.R
